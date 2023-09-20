@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  wordpress:
+    image: wordpress:php8.0
+    ports:
+      - 80:80
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: database:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - wpsite
+    links:
+      - db:database
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+    expose:
+      - 3306
+    networks:
+      - wpsite
+
+  phpmyadmin:
+    depends_on:
+      - db
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: db:3306
+      MYSQL_ROOT_PASSWORD: root_password
+    networks:
+      - wpsite
+
+  pythonapp:
+    build:
+      context: ./msdocs-python-flask-webapp-quickstart
+      dockerfile: ./Dockerfile
+    image: myflaskapp:latest
+    container_name: flaskapp
+    ports:
+      - 5000:5000
+
+volumes:
+  db_data:
+  wp_data:
+
+networks:
+  wpsite:
